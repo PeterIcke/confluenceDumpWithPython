@@ -89,6 +89,7 @@ if args.mode == 'single':
 
     page_url = f"{my_body_export_view['_links']['base']}{my_body_export_view['_links']['webui']}"
     page_parent = myModules.get_page_parent(atlassian_site,page_id,user_name,api_token)
+    space_key = myModules.get_page_space_key(atlassian_site,page_id,user_name,api_token)
 
     my_outdir_base = os.path.join(my_outdir_base,f"{page_id}-{my_body_export_view_title}")        # sets outdir to path under page_name
     my_outdir_content = my_outdir_base
@@ -102,7 +103,7 @@ if args.mode == 'single':
     my_outdirs = myModules.mk_outdirs(my_outdir_base)               # attachments, embeds, scripts
     my_page_labels = myModules.get_page_labels(atlassian_site,page_id,user_name,api_token)
     print(f"Base export folder is \"{my_outdir_base}\" and the Content goes to \"{my_outdir_content}\"")
-    myModules.dump_html(atlassian_site,my_body_export_view_html,my_body_export_view_title,page_id,my_outdir_base, my_outdir_content,my_page_labels,page_parent,user_name,api_token,sphinx_compatible,sphinx_tags,arg_html_output=args.html,arg_rst_output=args.rst)
+    myModules.dump_html(atlassian_site,space_key,my_body_export_view_html,my_body_export_view_title,page_id,my_outdir_base, my_outdir_content,my_page_labels,page_parent,user_name,api_token,sphinx_compatible,sphinx_tags,arg_html_output=args.html,arg_rst_output=args.rst)
     print("Done!")
 elif args.mode == 'space':
     ###########
@@ -168,7 +169,7 @@ elif args.mode == 'space':
             #my_body_export_view_labels = ",".join(myModules.get_page_labels(atlassian_site,p['page_id'],user_name,api_token))
             mypage_url = f"{my_body_export_view['_links']['base']}{my_body_export_view['_links']['webui']}"
             print(f"dump_html arg sphinx_compatible = {sphinx_compatible}")
-            myModules.dump_html(atlassian_site,my_body_export_view_html,my_body_export_view_title,p['page_id'],my_outdir_base,my_outdir_content,my_body_export_view_labels,p['parentId'],user_name,api_token,sphinx_compatible,sphinx_tags,arg_html_output=args.html,arg_rst_output=args.rst)
+            myModules.dump_html(atlassian_site,space_key,my_body_export_view_html,my_body_export_view_title,p['page_id'],my_outdir_base,my_outdir_content,my_body_export_view_labels,p['parentId'],user_name,api_token,sphinx_compatible,sphinx_tags,arg_html_output=args.html,arg_rst_output=args.rst)
     print("Done!")
 elif args.mode == 'pageprops':
     ###############
@@ -178,6 +179,7 @@ elif args.mode == 'pageprops':
     my_page_properties_children_dict = {}
 
     page_id = args.page
+    space_key = myModules.get_page_space_key(atlassian_site,page_id,user_name,api_token)
     #
     # Get Page Properties REPORT
     #
@@ -227,6 +229,7 @@ elif args.mode == 'pageprops':
 
         myModules.dump_html(
                 arg_site=atlassian_site,
+                arg_space_key=space_key,
                 arg_html=my_child_export_view_html,
                 arg_title=my_child_export_view_title,
                 arg_page_id=p,
@@ -245,6 +248,7 @@ elif args.mode == 'pageprops':
             )                  # creates html files for every child
     myModules.dump_html(
             arg_site=atlassian_site,
+            arg_space_key=space_key,
             arg_html=my_report_export_view_html,
             arg_title=my_report_export_view_title,
             arg_page_id=page_id,

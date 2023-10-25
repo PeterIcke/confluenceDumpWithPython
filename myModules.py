@@ -128,6 +128,11 @@ def get_page_parent(arg_site,arg_page_id,arg_username,arg_api_token):
     response = requests.get(server_url, auth=(arg_username, arg_api_token),timeout=30)
     return(response.json()['parentId'])
 
+def get_page_space_key(arg_site,arg_page_id,arg_username,arg_api_token):
+    server_url = f"https://{arg_site}.atlassian.net/wiki/rest/api/content/{arg_page_id}"
+    r_pagetree = requests.get(server_url, auth=(arg_username, arg_api_token),timeout=30)
+    return(r_pagetree.json()['space']['key'])
+
 def remove_illegal_characters(input):
     return re.sub(r'[^\w_\.\- ]+', '_', input)
 
@@ -186,6 +191,7 @@ def get_editor_version(arg_site,arg_page_id,arg_username,arg_api_token):
 
 def dump_html(
     arg_site,
+    arg_space_key,
     arg_html,
     arg_title,
     arg_page_id,
@@ -200,7 +206,8 @@ def dump_html(
     arg_type="",
     arg_html_output=False,
     arg_rst_output=True,
-    arg_show_labels=False
+    arg_show_labels=False,
+    arg_space_pages_short={}
     ):
     """Create HTML and RST files
 
@@ -351,6 +358,45 @@ def dump_html(
                 except:
                     print(f"WARNING: Skipping emoticon file {file_path} due to issues. url: {emoticon_src}")
         emoticon['src'] = my_emoticon_path
+
+    # dealing with 'a' hrefs. Only when exporting to HTML.
+    if arg_html_output:
+        for a in soup.findAll('a', href=True):
+            href = a['href']
+            
+            if f'{arg_site}.atlassian.net' in href:
+                # Handle both /pages/id and /pages/id/title, and also include the uri fragment (#div).
+                match = re.match(f".*{arg_site}.atlassian.net/wiki/spaces/{arg_space_key}/pages/([\d]*)(?:#(.*))?(?:/(.*))?", href)
+                if match:
+                    id = match.group(1)
+                    fragment = match.group(2)
+                    page = match.group(3)
+                    
+                    if id == arg_page_id:
+                        # The current page only needs the uri fragment if it exists, otherwise the href will be '#'.
+                        href = "#" + fragment
+                    elif len(arg_space_pages_short) > 0:
+                        # Find the page from the space collection:
+                        found = False
+                        for space_page in arg_space_pages_short:
+                            page_id = space_page['page_id']
+                            page_title = space_page['pageTitle']
+                            if page_id == id:
+                                found = True
+                                # Update the href to the page foromat and remove the illegal characters for replaced links.
+                                href = page_title.replace("/","-").replace(":","-").replace(" ","_") + ".html"
+                                # Add the URI fragment if it is defined.
+                                if fragment is not None:
+                                    href += "#" + fragment
+                                break
+                        if not found:
+                            print(f"WARNING: href not found for page {page} in {arg_title}: {href}")
+                else: # match == None
+                    print(f"WARNING: invalid href found in page {arg_title} ({arg_page_id}): {href}")
+            elif 'http://' in href or 'https://' in href:
+                print(f"DEBUG: external href found in page {arg_title}_{arg_page_id}: {href}")
+                
+            a['href'] = href
 
     my_body_export_view = get_body_export_view(arg_site,arg_page_id,arg_username,arg_api_token).json()
     page_url = f"{my_body_export_view['_links']['base']}{my_body_export_view['_links']['webui']}"
