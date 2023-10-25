@@ -409,8 +409,12 @@ def dump_html(
                             page_title = space_page['pageTitle']
                             if page_id == id:
                                 found = True
-                                # Update the href to the page foromat and remove the illegal characters for replaced links.
-                                href = page_title.replace("/","-").replace(":","-").replace(" ","_") + ".html"
+                                # Update the href to the page format and remove the illegal characters for replaced links.
+                                if arg_confluence_compatible:
+                                    href = (f"{page_title}_{page_id}.html").replace(" ","-").replace("+","-")
+                                else:
+                                    href = page_title + ".html"
+                                href = page_title.replace("/","-").replace(":","-").replace(" ","_")
                                 # Add the URI fragment if it is defined.
                                 if fragment is not None:
                                     href += "#" + fragment
