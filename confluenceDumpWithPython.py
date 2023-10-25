@@ -174,7 +174,7 @@ elif args.mode == 'space':
             #my_body_export_view_labels = ",".join(myModules.get_page_labels(atlassian_site,p['page_id'],user_name,api_token))
             mypage_url = f"{my_body_export_view['_links']['base']}{my_body_export_view['_links']['webui']}"
             print(f"dump_html arg sphinx_compatible = {sphinx_compatible}")
-            myModules.dump_html(atlassian_site,space_key,my_body_export_view_html,my_body_export_view_title,p['page_id'],my_outdir_base,my_outdir_content,my_body_export_view_labels,p['parentId'],user_name,api_token,sphinx_compatible,sphinx_tags,arg_html_output=args.html,arg_rst_output=args.rst,arg_confluence_compatible=confluence_compatible)
+            myModules.dump_html(atlassian_site,space_key,my_body_export_view_html,my_body_export_view_title,p['page_id'],my_outdir_base,my_outdir_content,my_body_export_view_labels,p['parentId'],user_name,api_token,sphinx_compatible,sphinx_tags,arg_html_output=args.html,arg_rst_output=args.rst,arg_space_pages_short=all_pages_short,arg_confluence_compatible=confluence_compatible)
     print("Done!")
 elif args.mode == 'pageprops':
     ###############
