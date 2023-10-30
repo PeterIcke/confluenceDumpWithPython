@@ -439,7 +439,13 @@ def dump_html(
                     for space_page in arg_space_pages_short:
                         if space_page['parentId'] is None and space_page['space_id'] == space_id:
                             found = True
-                            href = remove_illegal_characters_html_file(space_page['pageTitle'] + ".html")
+                            page_id = space_page['page_id']
+                            page_title = space_page['pageTitle']
+                            if arg_confluence_compatible:
+                                href = (f"{page_title}_{page_id}.html").replace(" ","-").replace("+","-")
+                            else:
+                                href = page_title + ".html"
+                            href = remove_illegal_characters_html_file(href)
                             break
                     if not found:
                         print(f"WARNING: space page not found in page {arg_title} ({arg_page_id}): {href}")
