@@ -136,6 +136,9 @@ def get_page_space_key(arg_site,arg_page_id,arg_username,arg_api_token):
 def remove_illegal_characters(input):
     return re.sub(r'[^\w_\.\- ]+', '_', input)
 
+def remove_illegal_characters_html_file(input):
+    return input.replace("/","-").replace(":","-").replace(" ","_")
+
 def get_attachments(arg_site,arg_page_id,arg_outdir_attach,arg_username,arg_api_token):
     my_attachments_list = []
     server_url = f"https://{arg_site}.atlassian.net/wiki/rest/api/content/{arg_page_id}?expand=children.attachment"
@@ -257,7 +260,7 @@ def dump_html(
         pre['class'] = [c for c in pre.get('class', []) if c != 'syntaxhighlighter-pre']
 
     # continuing
-    html_file_name = (f"{arg_title}.html").replace("/","-").replace(":","-").replace(" ","_")
+    html_file_name = remove_illegal_characters_html_file(f"{arg_title}.html")
     html_file_path = os.path.join(my_outdir_content,html_file_name)
     my_attachments = get_attachments(arg_site,arg_page_id,str(my_outdirs[0]),arg_username,arg_api_token)
     #
@@ -387,7 +390,7 @@ def dump_html(
                             if page_id == id:
                                 found = True
                                 # Update the href to the page foromat and remove the illegal characters for replaced links.
-                                href = page_title.replace("/","-").replace(":","-").replace(" ","_") + ".html"
+                                href = remove_illegal_characters_html_file(page_title + ".html")
                                 # Add the URI fragment if it is defined.
                                 if fragment is not None:
                                     href += "#" + fragment
