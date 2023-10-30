@@ -377,7 +377,7 @@ def dump_html(
                     
                     if id == arg_page_id:
                         # The current page only needs the uri fragment if it exists, otherwise the href will be '#'.
-                        href = "#" + fragment
+                        href = "#" + (fragment or "")
                     elif len(arg_space_pages_short) > 0:
                         # Find the page from the space collection:
                         found = False
