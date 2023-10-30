@@ -8,14 +8,16 @@ References to downloaded files will be updated to their local relative path.
 Nonetheless, the refactoring will require only 2 files and accept command-line args:
 * `myModules.py`: Contains all the required functions.
 * `confluenceDumpWithPython.py`: Script to use with the following command line args:
-  * `-m, --mode`: The export mode, `single`, `space`, `bylabel`, `pageprops` (required).
-    * Note: Only `single`, `pageprops` and `space` have been implemented so far.
+  * `-m, --mode`: The export mode, `single`, `space`, `recursive`, `bylabel`, `pageprops` (required).
+    * Note: Only `single`, `recursive`, `pageprops` and `space` have been implemented so far.
   * `-S, --site`: The Atlassian Site (required).
   * `-s, --space`: The Space Key (if needed).
   * `-p, --page`: The Page ID (if needed).
   * `-l, --label`: The Page label (if needed).
   * `-x, --sphinx`: The `_images` and `_static` folders are placed at the root of the export folder, instead of together with the exported HTML files.
+  * `-c, --confluence`: Exports the html and rst files to the matching folder structure of the confluence html export. Files are exported to `spaceKey/` and attachments to `attachments/pageId/` as well as the other export folders.
   * `--notags`: Does not add the tags directives to the rst files (when the `sphinx-tags` addon is not used).
+  * `--relativelinks`: Exports links of the HTML files as relative files, only works for links within the space of the exported pages.
 * `updatePageLinks.py`: Update online confluence links to the local files that have been downloaded so far.
   * `--folder`: Folder containing the files to update.
   * `--test`: Instead of overwriting the original .rst files, it will create updated ones with `zout_` as a prefix.
