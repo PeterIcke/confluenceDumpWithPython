@@ -36,7 +36,7 @@ if args.mode == 'rst':
 elif args.mode == 'html':
     file_type = '.html'
 else:
-    print("ERROR: Invalid file-type")
+    logging.error("ERROR: Invalid file-type")
     exit(1)
 
 if file_type == '.rst':
@@ -194,7 +194,7 @@ elif file_type == '.html':
                     page_id = key
                     break
             if page_id is None:
-                print(f"WARNING: Could not find page id for page {filename}")
+                logging.warn(f"WARNING: Could not find page id for page {filename}")
 
             for a in soup.findAll('a', href=True):
                 href = a['href']
@@ -215,14 +215,14 @@ elif file_type == '.html':
                                 found = True
                                 break
                         if not found:
-                            print(f"WARNING: Could not find page id for {filename}")
+                            logging.warn(f"WARNING: Could not find page id for {filename}")
 
                     elif re.match(f".*{site}.atlassian.net/wiki/spaces/.*/?$", href):
-                        print(f"WARNING: Found space link in {filename} ({page_id}): {href}")
+                        logging.warn(f"WARNING: Found space link in {filename} ({page_id}): {href}")
                     else: # match == None
-                        print(f"WARNING: invalid href found in page {filename} ({page_id}): {href}")
+                        logging.warn(f"WARNING: invalid href found in page {filename} ({page_id}): {href}")
                 elif 'http://' in href or 'https://' in href:
-                    print(f"INFO: external href found in page {filename}_{page_id}: {href}")
+                    logging.info(f"INFO: external href found in page {filename}_{page_id}: {href}")
 
                 a['href'] = href
                 
