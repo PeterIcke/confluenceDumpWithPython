@@ -28,16 +28,31 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 attach_dir = "_images/"
 emoticons_dir = "_images/"
 styles_dir = "_static/"
+confluence_css = "confluence.css"
+confluence_css_output = confluence_css
 
-def set_variables():
+def set_variables(arg_page_id = None, arg_confluence_compatible = False):
     """Set variables for export folders"""
+    
+    global attach_dir;
+    global emoticons_dir;
+    global styles_dir;
+    global confluence_css_output
+
+    if arg_confluence_compatible:
+        attach_dir = "attachments/"
+        emoticons_dir = "images/icons/emoticons/"
+        styles_dir = "styles/"
+        confluence_css_output = "site.css"
+        
     dict_vars = {}
-    dict_vars['attach_dir'] = "_images/"
-    dict_vars['emoticons_dir'] = "_images/"
-    dict_vars['styles_dir'] = "_static/"
-    attach_dir = "_images/"
-    emoticons_dir = "_images/"
-    styles_dir = "_static/"
+    dict_vars['attach_dir'] = attach_dir
+    dict_vars['emoticons_dir'] = emoticons_dir
+    dict_vars['styles_dir'] = styles_dir
+    
+    if arg_confluence_compatible and arg_page_id is not None:
+        dict_vars['attach_dir'] = f"{attach_dir}{arg_page_id}/"
+
     return(dict_vars)
 #
 # Create the output folders, set to match Sphynx structure
@@ -50,28 +65,31 @@ def set_dirs(arg_outdir="output"):        # setting default to output
     outdir_styles = os.path.join(arg_outdir,my_vars['styles_dir'])
     return[outdir_attach, outdir_emoticons, outdir_styles]      # returns a list
 
-def mk_outdirs(arg_outdir="output"):       # setting default to output
+def mk_outdirs(arg_outdir="output", arg_page_id = None, arg_confluence_compatible = False):       # setting default to output
     """Create the output folders"""
-    my_vars = set_variables()
+    my_vars = set_variables(arg_page_id, arg_confluence_compatible)
     outdir_list = set_dirs(arg_outdir)
     outdir_attach = outdir_list[0]
     outdir_emoticons = outdir_list[1]
     outdir_styles = outdir_list[2]
 
+    if arg_confluence_compatible and arg_page_id is not None:
+        outdir_attach = outdir_list[0] = f"{outdir_attach}{arg_page_id}/"
+        
     if not os.path.exists(arg_outdir):
         os.mkdir(arg_outdir)
 
     if not os.path.exists(outdir_attach):
-        os.mkdir(outdir_attach)
+        os.makedirs(outdir_attach)
 
     if not os.path.exists(outdir_emoticons):
-        os.mkdir(outdir_emoticons)
+        os.makedirs(outdir_emoticons)
 
     if not os.path.exists(outdir_styles):
-        os.mkdir(outdir_styles)
+        os.makedirs(outdir_styles)
 
-    if not os.path.exists(outdir_styles + '/confluence.css'):
-        shutil.copy(f"{script_dir}/styles/confluence.css", f"{outdir_styles}confluence.css")
+    if not os.path.exists(outdir_styles + '/' + confluence_css_output):
+        shutil.copy(f"{script_dir}/styles/{confluence_css}", f"{outdir_styles}/{confluence_css_output}")
     return(outdir_list)
 
 def get_space_title(arg_site,arg_space_id,arg_username,arg_api_token):
@@ -128,8 +146,21 @@ def get_page_parent(arg_site,arg_page_id,arg_username,arg_api_token):
     response = requests.get(server_url, auth=(arg_username, arg_api_token),timeout=30)
     return(response.json()['parentId'])
 
+def get_page_space_key(arg_site,arg_page_id,arg_username,arg_api_token):
+    server_url = f"https://{arg_site}.atlassian.net/wiki/rest/api/content/{arg_page_id}"
+    r_pagetree = requests.get(server_url, auth=(arg_username, arg_api_token),timeout=30)
+    return(r_pagetree.json()['space']['key'])
+
+def get_page_space_id(arg_site,arg_page_id,arg_username,arg_api_token):
+    server_url = f"https://{arg_site}.atlassian.net/wiki/rest/api/content/{arg_page_id}"
+    r_pagetree = requests.get(server_url, auth=(arg_username, arg_api_token),timeout=30)
+    return(r_pagetree.json()['space']['id'])
+
 def remove_illegal_characters(input):
     return re.sub(r'[^\w_\.\- ]+', '_', input)
+
+def remove_illegal_characters_html_file(input):
+    return remove_illegal_characters(input.replace("/","-").replace(":","-").replace(" ","_"))
 
 def get_attachments(arg_site,arg_page_id,arg_outdir_attach,arg_username,arg_api_token):
     my_attachments_list = []
@@ -186,6 +217,7 @@ def get_editor_version(arg_site,arg_page_id,arg_username,arg_api_token):
 
 def dump_html(
     arg_site,
+    arg_space_key,
     arg_html,
     arg_title,
     arg_page_id,
@@ -200,7 +232,9 @@ def dump_html(
     arg_type="",
     arg_html_output=False,
     arg_rst_output=True,
-    arg_show_labels=False
+    arg_show_labels=False,
+    arg_space_pages_short={},
+    arg_confluence_compatible=False
     ):
     """Create HTML and RST files
 
@@ -229,9 +263,10 @@ def dump_html(
     if not os.path.exists(my_outdir_content):
         os.mkdir(my_outdir_content)
     #myOutdir = os.path.join(arg_outdir,str(arg_page_id) + "-" + str(arg_title))
-    my_outdirs = mk_outdirs(arg_outdir_base)        # this is for everything for _images and _static
-    my_vars = set_variables()     # create a dict with the 3 folder paths: attach, emoticons, styles
-
+    my_outdirs = mk_outdirs(arg_outdir_base, arg_page_id, arg_confluence_compatible)        # this is for everything for _images and _static
+    my_vars = set_variables(arg_page_id, arg_confluence_compatible)     # create a dict with the 3 folder paths: attach, emoticons, styles
+    
+    
     soup = bs(arg_html, "html.parser")
 
     #
@@ -250,7 +285,13 @@ def dump_html(
         pre['class'] = [c for c in pre.get('class', []) if c != 'syntaxhighlighter-pre']
 
     # continuing
-    html_file_name = (f"{arg_title}.html").replace("/","-").replace(":","-").replace(" ","_")
+    if arg_confluence_compatible:
+        # Confluence mode adds the page id to the title and replaces spaces with a dash.
+        html_file_name = (f"{arg_title}_{arg_page_id}.html").replace(" ","-").replace("+","-")
+    else:
+        html_file_name = (f"{arg_title}.html")
+
+    html_file_name = remove_illegal_characters_html_file(html_file_name)
     html_file_path = os.path.join(my_outdir_content,html_file_name)
     my_attachments = get_attachments(arg_site,arg_page_id,str(my_outdirs[0]),arg_username,arg_api_token)
     #
@@ -355,6 +396,66 @@ def dump_html(
                     print(f"WARNING: Skipping emoticon file {file_path} due to issues. url: {emoticon_src}")
         emoticon['src'] = my_emoticon_path
 
+    # dealing with 'a' hrefs. Only when exporting to HTML.
+    if arg_html_output:
+        for a in soup.findAll('a', href=True):
+            href = a['href']
+            
+            if f'{arg_site}.atlassian.net' in href:
+                # Handle both /pages/id and /pages/id/title, and also include the uri fragment (#div).
+                match = re.match(f".*{arg_site}.atlassian.net/wiki/spaces/{arg_space_key}/pages/([\d]*)(?:#(.*))?(?:/(.*))?", href)
+                if match:
+                    id = match.group(1)
+                    fragment = match.group(2)
+                    page = match.group(3)
+                    
+                    if id == arg_page_id:
+                        # The current page only needs the uri fragment if it exists, otherwise the href will be '#'.
+                        href = "#" + (fragment or "")
+                    elif len(arg_space_pages_short) > 0:
+                        # Find the page from the space collection:
+                        found = False
+                        for space_page in arg_space_pages_short:
+                            page_id = space_page['page_id']
+                            page_title = space_page['pageTitle']
+                            if page_id == id:
+                                found = True
+                                # Update the href to the page format and remove the illegal characters for replaced links.
+                                if arg_confluence_compatible:
+                                    href = (f"{page_title}_{page_id}.html").replace(" ","-").replace("+","-")
+                                else:
+                                    href = page_title + ".html"
+                                href = remove_illegal_characters_html_file(href)
+                                # Add the URI fragment if it is defined.
+                                if fragment is not None:
+                                    href += "#" + fragment
+                                break
+                        if not found:
+                            print(f"WARNING: href not found for page {page} in {arg_title}: {href}")
+                elif len(arg_space_pages_short) > 0 and re.match(f".*{arg_site}.atlassian.net/wiki/spaces/{arg_space_key}/?$", href):
+                    # Handle space link.
+                    space_id = str(get_page_space_id(arg_site,arg_page_id,arg_username,arg_api_token));
+                    found = False
+                    for space_page in arg_space_pages_short:
+                        if space_page['parentId'] is None and space_page['space_id'] == space_id:
+                            found = True
+                            page_id = space_page['page_id']
+                            page_title = space_page['pageTitle']
+                            if arg_confluence_compatible:
+                                href = (f"{page_title}_{page_id}.html").replace(" ","-").replace("+","-")
+                            else:
+                                href = page_title + ".html"
+                            href = remove_illegal_characters_html_file(href)
+                            break
+                    if not found:
+                        print(f"WARNING: space page not found in page {arg_title} ({arg_page_id}): {href}")
+                else: # match == None
+                    print(f"WARNING: invalid href found in page {arg_title} ({arg_page_id}): {href}")
+            elif 'http://' in href or 'https://' in href:
+                print(f"DEBUG: external href found in page {arg_title}_{arg_page_id}: {href}")
+                
+            a['href'] = href
+
     my_body_export_view = get_body_export_view(arg_site,arg_page_id,arg_username,arg_api_token).json()
     page_url = f"{my_body_export_view['_links']['base']}{my_body_export_view['_links']['webui']}"
     if arg_sphinx_compatible == True:
@@ -365,21 +466,71 @@ def dump_html(
     my_header = (f"<html>\n"
                 f"<head>\n"
                 f"<title>{arg_title}</title>\n"
-                f"<link rel=\"stylesheet\" href=\"{styles_dir_relative}confluence.css\" type=\"text/css\" />\n"
+                f"<link rel=\"stylesheet\" href=\"{styles_dir_relative}{confluence_css_output}\" type=\"text/css\" />\n"
                 f"<meta name=\"generator\" content=\"confluenceExportHTML\" />\n"
                 f"<META http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n"
                 f"<meta name=\"ConfluencePageLabels\" content=\"{arg_page_labels}\">\n"
                 f"<meta name=\"ConfluencePageID\" content=\"{arg_page_id}\">\n"
                 f"<meta name=\"ConfluencePageParent\" content=\"{arg_page_parent}\">\n"
                 f"</head>\n"
-                f"<body>\n"
-                f"<h2>{arg_title}</h2>\n"
-                f"<p>Original URL: <a href=\"{page_url}\"> {arg_title}</a><hr>\n"
     )
+    myFooter = ""
+    
+    # Create breadcrumbs
+    breadcrumbs = []
+    if arg_confluence_compatible and arg_page_parent is not None and len(arg_space_pages_short) > 0:
+        parent_id = arg_page_parent
+        while parent_id is not None:
+            found = False
+            for space_page in arg_space_pages_short:
+                page_id = space_page['page_id']
+                page_title = space_page['pageTitle']
+                if page_id == parent_id:
+                    if arg_confluence_compatible:
+                        page_link = (f"{page_title}_{page_id}.html").replace(" ","-").replace("+","-")
+                    else:
+                        page_link = page_title + ".html"
+                    page_link = page_link.replace("/","-").replace(":","-").replace(" ","_")
+                    breadcrumbs.append({"name": page_title, "url": page_link})
+                    found = True
+                    break
+            if not found:
+                print(f"WARNING: Could not find parent page with id {parent_id} for breadcrumbs")
+                break
+            else:
+                parent_id = space_page['parentId']
+
+    if arg_confluence_compatible:
+        breadcrumbs_html = "".join([('<li class="first">' if i == 0 else '<li>') + f"<span><a href=\"{x['url']}\">{x['name']}</a></span></li>" for i,x in reversed(list(enumerate(breadcrumbs)))])
+        my_header += (f"<body class=\"theme-default aui-theme-default\">\n"
+                      f"<div id=\"page\">\n"
+                      f"<div id=\"main\" class=\"aui-page-panel\">\n"
+                      f"<div id=\"main-header\">\n"
+                      f"  <div id=\"breadcrumb-section\">\n"
+                      f"    <ol id=\"breadcrumbs\">\n{breadcrumbs_html}</ol>\n"
+                      f"  </div>\n"
+                      f"  <h1 id=\"title-heading\" class=\"pagetitle\">\n"
+                      f"    <span id=\"title-text\">{arg_title}</span>\n"
+                      f"  </h1>\n"
+                      F"</div>\n"
+                      f"<div id=\"content\" class=\"view\">\n"
+                      f"<div id=\"main-content\" class=\"wiki-content group\">\n"
+                     )
+        myFooter = (f"</div>\n"
+                    f"</div>\n"
+                    f"</div>\n"
+                    f"</div>\n"
+                    f"</body>\n"
+                   )
+    else:
+        my_header += (f"<body>\n"
+                      f"<h2>{arg_title}</h2>\n"
+                      f"<p>Original URL: <a href=\"{page_url}\"> {arg_title}</a><hr>\n"
+                     )
 
 
-    myFooter = (f"</body>\n"
-                f"</html>"
+    myFooter += (f"</body>\n"
+                 f"</html>"
     )
     #
     # At the end of the page, put a link to all attachments.
