@@ -432,6 +432,17 @@ def dump_html(
                                 break
                         if not found:
                             print(f"WARNING: href not found for page {page} in {arg_title}: {href}")
+                elif len(arg_space_pages_short) > 0 and re.match(f".*{arg_site}.atlassian.net/wiki/spaces/{arg_space_key}/?$", href):
+                    # Handle space link.
+                    space_id = str(get_page_space_id(arg_site,arg_page_id,arg_username,arg_api_token));
+                    found = False
+                    for space_page in arg_space_pages_short:
+                        if space_page['parentId'] is None and space_page['space_id'] == space_id:
+                            found = True
+                            href = remove_illegal_characters_html_file(space_page['pageTitle'] + ".html")
+                            break
+                    if not found:
+                        print(f"WARNING: space page not found in page {arg_title} ({arg_page_id}): {href}")
                 else: # match == None
                     print(f"WARNING: invalid href found in page {arg_title} ({arg_page_id}): {href}")
             elif 'http://' in href or 'https://' in href:
