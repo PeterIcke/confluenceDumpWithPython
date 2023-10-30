@@ -24,10 +24,16 @@ Nonetheless, the refactoring will require only 2 files and accept command-line a
 * `updatePageLinks.py`: Update online confluence links to the local files that have been downloaded so far.
   * `--folder`: Folder containing the files to update.
   * `--test`: Instead of overwriting the original .rst files, it will create updated ones with `zout_` as a prefix.
+  * `--loglevel`: Changes the logging level. Available levels: `critical`, `error`, `warning`, `info` or `debug`.
+  * `--logformat`: Modifies the format of the output messages. See [logging](https://docs.python.org/library/logging.html#logrecord-attributes) for more information.
+  * `--logfile`: Write the output messages to the specified file instead of the output stream. Example: `--logfile output\export.log`.
 * `getPageEditorVersion.py`: Get the editor version from single pages or all pages in a space.
   * `--site`: The Atlassian Site (required).
   * `--page`: Page ID (either/or)
   * `--space`: Space Key (either/or)
+  * `--loglevel`: Changes the logging level. Available levels: `critical`, `error`, `warning`, `info` or `debug`.
+  * `--logformat`: Modifies the format of the output messages. See [logging](https://docs.python.org/library/logging.html#logrecord-attributes) for more information.
+  * `--logfile`: Write the output messages to the specified file instead of the output stream. Example: `--logfile output\export.log`.
 
 For CSS Styling, it uses the `confluence.css` from Confluence that can be obtained by using the Workaround described in: https://jira.atlassian.com/browse/CONFSERVER-40907.
 The `site.css` file included with Confluence UI HTML exports is not as complete as the one above.

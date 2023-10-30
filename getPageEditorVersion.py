@@ -14,7 +14,19 @@ parser.add_argument('--space', '-s', type=str,
                     help='Space Key')
 parser.add_argument('--page', '-p', type=int,
                     help='Page ID')
+parser.add_argument('--loglevel', default='debug',
+                    choices=['critical', 'error', 'warning', 'info', 'debug'],
+                    help='Provide logging level. Example --loglevel debug, default=warning')
+parser.add_argument('--logformat',
+                    help='Provide the logging format. See the documentation of the logging module for more details.')
+parser.add_argument('--logfile',
+                    help='Specifies the file that will be used for the logging rather than the standard output stream.')
 args = parser.parse_args()
+if args.logfile is None:
+    logging.basicConfig(level=args.loglevel.upper(), format=args.logformat)
+else:
+    logging.basicConfig(level=args.loglevel.upper(), format=args.logformat, filename=args.logfile)
+
 atlassian_site = args.site
 
 if args.page:
