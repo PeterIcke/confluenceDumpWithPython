@@ -1,3 +1,4 @@
+import logging
 import os.path
 import json
 import myModules
@@ -24,7 +25,7 @@ if args.page:
         editor_version = "v1"
     else:
         editor_version = "v2"
-    print(f"Page: {args.page} using Editor: {editor_version}")
+    logging.debug(f"Page: {args.page} using Editor: {editor_version}")
 elif args.space:
     space_key = args.space
     ## get all spaces in order to find the space ID based on the key
@@ -41,13 +42,13 @@ elif args.space:
             'spaceDescription' : n['description'],
             })
         if (n['key'] == space_key) or n['key'] == str.upper(space_key) or n['key'] == str.lower(space_key):
-            print("Found space: " + n['key'])
+            logging.debug("Found space: " + n['key'])
             space_id = n['id']
             space_name = n['name']
             current_parent = n['homepageId']
 
     if space_key == "" or space_key is None:    # if the supplied space key can't be found
-        print("Could not find Space Key in this site")
+        logging.warn("Could not find Space Key in this site")
     else:
         #
         # get list of pages from space
@@ -69,13 +70,13 @@ elif args.space:
     count_v2 = 0
     for my_page in all_pages_short:
         try:
-            print(f"Checking page {my_page['pageTitle']} ({my_page['page_id']})")
+            logging.debug(f"Checking page {my_page['pageTitle']} ({my_page['page_id']})")
             page_editor_version = myModules.get_editor_version(atlassian_site,my_page['page_id'],user_name,api_token).json()
         except KeyError:
-            print(f"Key Error with {my_page}")
+            logging.error(f"Key Error with {my_page}")
             break
         else:
-            print(f"OK with {my_page['page_id']}")
+            logging.debug(f"OK with {my_page['page_id']}")
 
         try:
             page_editor_version['metadata']['properties']['editor']['value'] == "v2"
@@ -91,6 +92,6 @@ elif args.space:
     json_file_name = f"{space_key}.json"
     with open(json_file_name,'wt') as file:
         file.write(str(all_pages_short))
-    print(f"Created the file {json_file_name}, {count_v1}/{count_v2} (v1/v2) pages")
+    logging.debug(f"Created the file {json_file_name}, {count_v1}/{count_v2} (v1/v2) pages")
 else:
-    print(f"No space or page supplied.")
+    logging.error(f"No space or page supplied.")

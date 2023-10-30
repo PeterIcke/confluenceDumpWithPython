@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import sys
@@ -37,7 +38,7 @@ for filename in my_rst_files:
             if ":confluencePageId:" in line:
                 my_rsts_pageid = line.split(":confluencePageId: ")[1][:-1]
                 rst_pageids.update({str(my_rsts_pageid)[:-1] : str(filename)})
-                print(f"{str(my_rsts_pageid)[:-1]} : {str(filename)}")
+                logging.debug(f"{str(my_rsts_pageid)[:-1]} : {str(filename)}")
                 break
 
     # write the file out
@@ -87,15 +88,15 @@ for filename in my_rst_files:
                         # using that pageID to match with the one in the "rst_pageids" dict
                         link_html_file = str(rst_pageids[link_pageid]).replace(".rst",".html")
                         line = line.replace(link_confluence,link_html_file)
-                        #print(f"In line {n}, replaced {link_confluence} with {link_html_file}.")
-                        #print(f"{find_match} will be replaced by {i}")
+                        #logging.debug(f"In line {n}, replaced {link_confluence} with {link_html_file}.")
+                        #logging.debug(f"{find_match} will be replaced by {i}")
                     if link_pageid not in conf_pageids:
                         conf_pageids.append(link_pageid)
                 all_tfile_lines.append(line)
             else:
                 all_tfile_lines.append(line)
         tfile.writelines(all_tfile_lines)
-        print(f"Created {out_filename}")
+        logging.debug(f"Created {out_filename}")
 #    with open(path_and_name, 'w') as file:
 #        file.writelines(all_file_lines)
     # write the file out
@@ -103,7 +104,7 @@ for filename in my_rst_files:
         for n in conf_pageids:
             file.write(str(n) + '\n')
 
-print(f"Created the file \"{conf_pageids_filename}\" with {len(conf_pageids)} entries")
+logging.info(f"Created the file \"{conf_pageids_filename}\" with {len(conf_pageids)} entries")
 # These are the Confluence links that I need to convert
 
 # Now I need to collect every .rst file name, as each includes
