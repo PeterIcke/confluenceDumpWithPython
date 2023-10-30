@@ -151,8 +151,16 @@ def get_page_space_key(arg_site,arg_page_id,arg_username,arg_api_token):
     r_pagetree = requests.get(server_url, auth=(arg_username, arg_api_token),timeout=30)
     return(r_pagetree.json()['space']['key'])
 
+def get_page_space_id(arg_site,arg_page_id,arg_username,arg_api_token):
+    server_url = f"https://{arg_site}.atlassian.net/wiki/rest/api/content/{arg_page_id}"
+    r_pagetree = requests.get(server_url, auth=(arg_username, arg_api_token),timeout=30)
+    return(r_pagetree.json()['space']['id'])
+
 def remove_illegal_characters(input):
     return re.sub(r'[^\w_\.\- ]+', '_', input)
+
+def remove_illegal_characters_html_file(input):
+    return input.replace("/","-").replace(":","-").replace(" ","_")
 
 def get_attachments(arg_site,arg_page_id,arg_outdir_attach,arg_username,arg_api_token):
     my_attachments_list = []
@@ -283,7 +291,7 @@ def dump_html(
     else:
         html_file_name = (f"{arg_title}.html")
 
-    html_file_name = html_file_name.replace("/","-").replace(":","-").replace(" ","_")
+    html_file_name = remove_illegal_characters_html_file(html_file_name)
     html_file_path = os.path.join(my_outdir_content,html_file_name)
     my_attachments = get_attachments(arg_site,arg_page_id,str(my_outdirs[0]),arg_username,arg_api_token)
     #
@@ -312,22 +320,25 @@ def dump_html(
             my_embed_external_path_relative = os.path.join(str('../' + my_vars['attach_dir']),my_embed_external_name)
         else:
             my_embed_external_path_relative = os.path.join(my_vars['attach_dir'],my_embed_external_name)
-        to_download = requests.get(orig_embed_external_path, allow_redirects=True)
         try:
-            open(my_embed_external_path,'wb').write(to_download.content)
+            if not os.path.exists(my_embed_external_path):
+                to_download = requests.get(orig_embed_external_path, allow_redirects=True)
+                open(my_embed_external_path,'wb').write(to_download.content)
+            img = Image.open(my_embed_external_path)
         except:
-            print(orig_embed_external_path)
-        img = Image.open(my_embed_external_path)
-        if img.width < 600:
-            embed_ext['width'] = img.width
+            print(f"WARNING: Skipping embed file {my_embed_external_path} due to issues. url: {orig_embed_external_path}")
         else:
-            embed_ext['width'] = 600
-        img.close
-        embed_ext['height'] = "auto"
-        embed_ext['onclick'] = f"window.open(\"{my_embed_external_path_relative}\")"
-        embed_ext['src'] = str(my_embed_external_path_relative)
-        embed_ext['data-image-src'] = str(my_embed_external_path_relative)
-        my_embeds_externals_counter = my_embeds_externals_counter + 1
+            if img is not None:
+                if img.width < 600:
+                    embed_ext['width'] = img.width
+                else:
+                    embed_ext['width'] = 600
+                img.close
+                embed_ext['height'] = "auto"
+                embed_ext['onclick'] = f"window.open(\"{my_embed_external_path_relative}\")"
+                embed_ext['src'] = str(my_embed_external_path_relative)
+                embed_ext['data-image-src'] = str(my_embed_external_path_relative)
+                my_embeds_externals_counter = my_embeds_externals_counter + 1
 
     #
     # dealing with "confluence-embedded-image"
@@ -348,7 +359,7 @@ def dump_html(
             if not os.path.exists(my_embed_path):
                 to_download = requests.get(orig_embed_path, allow_redirects=True, auth=(arg_username, arg_api_token))
                 open(my_embed_path,'wb').write(to_download.content)
-                img = Image.open(my_embed_path)
+            img = Image.open(my_embed_path)
         except:
             print(f"WARNING: Skipping embed file {my_embed_path} due to issues. url: {orig_embed_path}")
         else:
@@ -400,7 +411,7 @@ def dump_html(
                     
                     if id == arg_page_id:
                         # The current page only needs the uri fragment if it exists, otherwise the href will be '#'.
-                        href = "#" + fragment
+                        href = "#" + (fragment or "")
                     elif len(arg_space_pages_short) > 0:
                         # Find the page from the space collection:
                         found = False
@@ -414,7 +425,7 @@ def dump_html(
                                     href = (f"{page_title}_{page_id}.html").replace(" ","-").replace("+","-")
                                 else:
                                     href = page_title + ".html"
-                                href = page_title.replace("/","-").replace(":","-").replace(" ","_")
+                                href = remove_illegal_characters_html_file(href)
                                 # Add the URI fragment if it is defined.
                                 if fragment is not None:
                                     href += "#" + fragment
