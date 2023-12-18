@@ -606,3 +606,89 @@ def dump_html(
         logging.info(f"Exported RST file: {rst_file_path}")
         if arg_html_output == False:
             os.remove(html_file_path)
+
+def dump_index_file(    
+    arg_pages,
+    arg_outdir_content,
+    arg_title,
+    arg_sphinx_compatible,
+    arg_confluence_compatible
+) :    
+    """Builds the html index for the given page.
+
+    Args:
+        arg_pages: All pages that are going to be exported.
+        arg_outdir_content: The output folder.
+        arg_title: The title of the index page.
+        arg_sphinx_compatible: Place _static and _images folder at root of output folder
+        arg_confluence_compatible: Boolean indicating the page names are confluence compatible.
+    """
+    my_vars = set_variables()
+    my_outdir_content = arg_outdir_content
+
+    index_list = f""
+    for page in arg_pages:
+        if page['parentId'] == None:        
+            index_list += append_child_pages_to_index_file(page, arg_pages, arg_confluence_compatible)
+
+    html_file_path = os.path.join(my_outdir_content,"index.html")
+
+    if arg_sphinx_compatible == True:
+        styles_dir_relative = f"../{my_vars['styles_dir']}"
+    else:
+        styles_dir_relative = my_vars['styles_dir']
+
+    my_header = (f"<html>\n"
+            f"<head>\n"
+            f"<title>{arg_title}</title>\n"
+            f"<link rel=\"stylesheet\" href=\"{styles_dir_relative}{confluence_css_output}\" type=\"text/css\" />\n"
+            f"<meta name=\"generator\" content=\"confluenceExportHTML\" />\n"
+            f"<META http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n"
+            f"</head>\n"
+    )
+
+    html_file = open(html_file_path, 'w', encoding='utf-8')
+    html_file.write(my_header)
+    html_file.write(index_list)
+    html_file.close();
+
+
+def append_child_pages_to_index_file(
+        arg_page,
+        arg_pages,
+        arg_confluence_compatible) :
+    
+    """Recursively builds the html index for the given page.
+
+    Args:
+        arg_page: The page to build the index for.
+        arg_pages: All pages that are going to be exported.
+        arg_confluence_compatible: Boolean indicating the page names are confluence compatible.
+
+    Returns:
+        response (string): The HTML index content of the passed page.
+    """
+
+    # Get the correct name for the link.
+    if arg_confluence_compatible:
+        html_file_name = (f"{arg_page['title']}_{arg_page['id']}.html").replace(" ","-").replace("+","-")
+    else:
+        html_file_name = (f"{arg_page['title']}.html")
+
+    html_file_name = remove_illegal_characters_html_file(html_file_name)
+
+    # Write the unordered list and list item for this page.
+    result = (f"<ul>\n"
+             f"<li>\n"
+             f"<a href={html_file_name}>{arg_page['title']}</a>\n")
+    
+    # recursively write the child pages to this list.
+    for page in arg_pages:
+        if page['parentId'] == arg_page['id']:            
+            result += append_child_pages(page, arg_pages, arg_confluence_compatible)
+
+    # close the list item and unordered list.            
+    result += (f"</li>\n"
+              f"</ul>\n")
+    
+    return result
