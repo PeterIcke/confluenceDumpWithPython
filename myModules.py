@@ -685,7 +685,7 @@ def append_child_pages_to_index_file(
     # recursively write the child pages to this list.
     for page in arg_pages:
         if page['parentId'] == arg_page['id']:            
-            result += append_child_pages(page, arg_pages, arg_confluence_compatible)
+            result += append_child_pages_to_index_file(page, arg_pages, arg_confluence_compatible)
 
     # close the list item and unordered list.            
     result += (f"</li>\n"
