@@ -281,7 +281,8 @@ elif args.mode == 'space':
             )
 
         # Make an index.html file
-        myModules.dump_index_file(all_pages_full, my_outdir_content, space_key, sphinx_compatible, confluence_compatible)
+        if args.html == True:
+            myModules.dump_index_file(all_pages_full, my_outdir_content, space_key, sphinx_compatible, confluence_compatible)
 
         # put it all together
         logging.debug(f"{len(all_pages_short)} pages to export")

@@ -628,7 +628,7 @@ def dump_index_file(
 
     index_list = f""
     for page in arg_pages:
-        if page['parentId'] == None:        
+        if page['parentId'] is None:        
             index_list += append_child_pages_to_index_file(page, arg_pages, arg_confluence_compatible)
 
     html_file_path = os.path.join(my_outdir_content,"index.html")

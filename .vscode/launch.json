@@ -20,7 +20,7 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/confluenceDumpWithPython.py",
-            "args": "--site qpssoftware --mode space --space HLPqiEN --html --no-rst --confluence",
+            "args": "--site optile --mode pageprops --page 78872647",
 //            "console": "integratedTerminal",
             "justMyCode": true,
 //            "preLaunchTask": "source .venv/bin/activate"
