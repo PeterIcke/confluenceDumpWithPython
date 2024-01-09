@@ -279,6 +279,11 @@ elif args.mode == 'space':
                 'space_id' : n['spaceId'],
                 }
             )
+
+        # Make an index.html file
+        if args.html == True:
+            myModules.dump_index_file(all_pages_full, my_outdir_content, space_key, sphinx_compatible, confluence_compatible)
+
         # put it all together
         logging.debug(f"{len(all_pages_short)} pages to export")
         page_counter = 0
