@@ -10240,3 +10240,7 @@ body.content-type-blogpost #main-header {
     margin-bottom: 0;
     padding-bottom: 5px
 }
+
+img.confluence-embedded-image.confluence-external-resource {
+    display: none
+}
