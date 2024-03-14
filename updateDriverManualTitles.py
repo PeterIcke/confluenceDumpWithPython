@@ -12,7 +12,7 @@ for r, d, f in os.walk(driver_manual_directory):
             html_files.append(found)
 
 for html_file in html_files:
-    with (open(html_file, encoding="utf8") as open_file):
+    with open(html_file, encoding="utf8") as open_file:
         soup = BeautifulSoup(open_file, 'html.parser')
         if soup.body is None:
             print("ERROR: No page body found. " + html_file)
@@ -36,5 +36,5 @@ for html_file in html_files:
         found_div.insert(1, new_tag)
         print("Successfully added a title div to " + html_file)
 
-    with (open(html_file, 'w', encoding="utf8") as file):
+    with open(html_file, 'w', encoding="utf8") as file:
         file.write(str(soup))
