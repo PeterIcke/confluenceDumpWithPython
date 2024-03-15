@@ -36,5 +36,5 @@ for html_file in html_files:
         found_div.insert(1, new_tag)
         print("Successfully added a title div to " + html_file)
 
-    with open(html_file, 'w', encoding="utf8") as file:
-        file.write(str(soup))
+    with open(html_file, 'w', encoding="utf8") as output_file:
+        output_file.write(soup.prettify())
