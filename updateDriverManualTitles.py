@@ -1,11 +1,21 @@
 import os
+import argparse
 from bs4 import BeautifulSoup
 
-driver_manual_directory = os.path.join(os.getcwd(), "output\\DM\\")
+parser = argparse.ArgumentParser()
+parser.add_argument('--folder', type=str, default='output/DM',
+                    help='Folder to scan and update the html files', required=True)
+parser.add_argument('--loglevel', default='warning',
+                    choices=['critical', 'error', 'warning', 'info', 'debug'],
+                    help='Provide logging level. Example --loglevel debug, default=warning')
+args = parser.parse_args()
+dir = args.folder
+
+documentation_directory = os.path.join(os.getcwd(), dir)
 # Get all the files in the driver directory
 html_files = []
 # r = root, d = directories, f = files
-for r, d, f in os.walk(driver_manual_directory):
+for r, d, f in os.walk(documentation_directory):
     for file in f:
         if file.endswith(".html"):
             found = os.path.join(r, file)
